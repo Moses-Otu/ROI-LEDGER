@@ -1,5 +1,6 @@
 import "server-only";
 import { calculateRoi, type RoiInput, type RoiResult } from "@/lib/roi";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminClient } from "@/lib/supabase/admin";
 
 const PAGE = 1000;
@@ -26,9 +27,9 @@ export interface DeploymentContext {
   input: RoiInput;
 }
 
-/** Loads everything the ROI module needs for one deployment. */
+/** Loads everything the ROI module needs for one deployment (works with a user-scoped client too). */
 export async function loadDeploymentContext(
-  db: AdminClient,
+  db: SupabaseClient,
   deploymentId: string,
   asOf: string,
 ): Promise<DeploymentContext> {
