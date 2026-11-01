@@ -14,7 +14,7 @@ This MVP covers post-deployment measurement. Deployments are self-contained, so 
 | Multi-tenant, RLS from day one | Every table has `org_id` (set from the parent by trigger). Policies are in `supabase/migrations/…_rls.sql`. |
 | Human time is counted once | All human time is **cost**. Value is the **full** baseline time per completed task. See `lib/roi/calculate.ts` and its tests. |
 | Every number is explainable | `calculateRoi()` returns an `explain` entry for each KPI. It is stored in `roi_snapshots.inputs` and shown in the drawer. |
-| Currency per organisation | `organisations.currency` (default NGN). Amounts are `numeric` and rounded only at output. |
+| Currency per organisation | `organisations.currency`, chosen from GBP, EUR or USD (`lib/currencies.ts`). Changing it later does not convert stored amounts. Amounts are `numeric` and rounded only at output. |
 | Secrets stay server-side | Connector credentials and webhook secrets are AES-256-GCM encrypted (`ENCRYPTION_KEY`). Column grants stop browser roles reading them. Ingest keys are stored as SHA-256 hashes. |
 
 ## How ROI is calculated

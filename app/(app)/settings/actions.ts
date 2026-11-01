@@ -7,6 +7,7 @@ import { issuesToErrors, type FormState } from "@/components/forms/field";
 import { CONNECTOR_TYPES, createConnector, type ConnectorType } from "@/lib/connectors";
 import { syncConnector, type ConnectorRow } from "@/lib/connectors/sync";
 import { decryptJson, encryptJson, encryptSecret } from "@/lib/crypto/aes-gcm";
+import { CURRENCY_CODES, type CurrencyCode } from "@/lib/currencies";
 import { requireAdmin } from "@/lib/dal";
 import { generateIngestKey } from "@/lib/ingest/keys";
 import { recalculateAndNotify } from "@/lib/ledger/pipeline";
@@ -33,6 +34,10 @@ export async function updateOrg(_prev: FormState, form: FormData): Promise<FormS
   const parsed = orgSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { errors: issuesToErrors(parsed.error.issues) };
   const { supabase, org } = await requireAdmin();
+  // GBP/EUR/USD, or keep a legacy code the org already has (amounts are never converted).
+  if (!CURRENCY_CODES.includes(parsed.data.currency as CurrencyCode) && parsed.data.currency !== org.currency) {
+    return { errors: { currency: "Choose GBP, EUR or USD" } };
+  }
   const { error } = await supabase.from("organisations").update(parsed.data).eq("id", org.id);
   return error ? { message: error.message } : done("Organisation saved");
 }

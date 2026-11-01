@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CONNECTOR_TYPES } from "@/lib/connectors/catalog";
 import type { ConnectorType } from "@/lib/connectors/types";
+import { currencyOptions } from "@/lib/currencies";
 import type { CurrentOrg } from "@/lib/dal";
 import type { FlagThresholds } from "@/lib/roi/types";
 import {
@@ -44,7 +45,7 @@ export function OrgForm({ org }: { org: CurrentOrg }) {
         <Input id="org_industry" name="industry" defaultValue={org.industry ?? ""} />
       </Field>
       <Field label="Currency" htmlFor="org_currency" hint="Changing it does not convert existing amounts." error={e.currency}>
-        <Input id="org_currency" name="currency" defaultValue={org.currency} maxLength={3} required />
+        <NativeSelect id="org_currency" name="currency" defaultValue={org.currency} options={currencyOptions(org.currency)} required />
       </Field>
       <Field label="Default loaded hourly rate" htmlFor="org_rate" error={e.default_loaded_hourly_rate}>
         <Input id="org_rate" name="default_loaded_hourly_rate" type="number" min="0" step="0.01" defaultValue={org.default_loaded_hourly_rate} />

@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import { Field, type FormState } from "@/components/forms/field";
+import { Field, NativeSelect, type FormState } from "@/components/forms/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { currencyOptions, DEFAULT_CURRENCY } from "@/lib/currencies";
 import { createOrganisation } from "./actions";
 
 export function OnboardingForm() {
@@ -18,7 +19,7 @@ export function OnboardingForm() {
         <Input id="industry" name="industry" placeholder="e.g. Manufacturing" />
       </Field>
       <Field label="Currency" htmlFor="currency" hint="All amounts are stored in this currency." error={e.currency}>
-        <Input id="currency" name="currency" defaultValue="NGN" maxLength={3} required />
+        <NativeSelect id="currency" name="currency" defaultValue={DEFAULT_CURRENCY} options={currencyOptions()} required />
       </Field>
       <Field
         label="Default loaded hourly rate"
