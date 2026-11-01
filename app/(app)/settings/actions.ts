@@ -8,7 +8,8 @@ import { issuesToErrors, type FormState } from "@/components/forms/field";
 import { CONNECTOR_TYPES, createConnector, type ConnectorType } from "@/lib/connectors";
 import { syncConnector, type ConnectorRow } from "@/lib/connectors/sync";
 import { decryptJson, encryptJson, encryptSecret } from "@/lib/crypto/aes-gcm";
-import { requireAdmin } from "@/lib/dal";
+import { cookies } from "next/headers";
+import { ORG_COOKIE, requireAdmin } from "@/lib/dal";
 import { generateIngestKey } from "@/lib/ingest/keys";
 import { recalculateAndNotify } from "@/lib/ledger/pipeline";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -248,5 +249,6 @@ export async function deleteDemoOrg(): Promise<void> {
   if (!org.is_demo) throw new Error("This organisation is not demo data");
   // Cascades to every row in the org.
   await createAdminClient().from("organisations").delete().eq("id", org.id).eq("is_demo", true);
-  redirect("/onboarding");
+  (await cookies()).delete(ORG_COOKIE);
+  redirect("/deployments"); // falls through to onboarding if no other org remains
 }

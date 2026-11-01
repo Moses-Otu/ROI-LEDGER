@@ -1,0 +1,101 @@
+{
+  "name": "AI ROI Ledger – Weekly human-time check-in",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "weeks", "weeksInterval": 1, "triggerAtDay": [1], "triggerAtHour": 9, "triggerAtMinute": 0 }]
+        }
+      },
+      "id": "a1f0e2c4-7b2d-4a39-8f3e-2c9d6e0b1001",
+      "name": "Every Monday 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// EDIT THIS LIST: one entry per deployment to check in on.\n// deployment_ref = the deployment id, or any of its mapped refs.\nconst deployments = [\n  { deployment_ref: 'REPLACE-WITH-DEPLOYMENT-ID', name: 'Procurement assistant', owner_email: 'owner@example.com' },\n];\n\n// Last week, Monday to Sunday (UTC).\nconst now = new Date();\nconst dow = (now.getUTCDay() + 6) % 7;\nconst monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - dow - 7));\nconst sunday = new Date(monday.getTime() + 6 * 86400000);\nconst iso = (d) => d.toISOString().slice(0, 10);\n\nreturn deployments.map((d) => ({ json: { ...d, period_start: iso(monday), period_end: iso(sunday) } }));"
+      },
+      "id": "a1f0e2c4-7b2d-4a39-8f3e-2c9d6e0b1002",
+      "name": "Deployments and last week",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "fromEmail": "ledger@example.com",
+        "toEmail": "={{ $json.owner_email }}",
+        "subject": "={{ 'Time spent on ' + $json.name + ' last week' }}",
+        "message": "={{ 'How many minutes did your team spend on ' + $json.name + ' between ' + $json.period_start + ' and ' + $json.period_end + '? Count only time spent because of the AI: checking its output, fixing mistakes, handling escalations and maintaining it. Enter 0 if none.' }}",
+        "responseType": "customForm",
+        "defineForm": "fields",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "Reviewing output (minutes)", "fieldName": "review", "fieldType": "number", "requiredField": true, "defaultValue": "0" },
+            { "fieldLabel": "Fixing mistakes (minutes)", "fieldName": "fix", "fieldType": "number", "requiredField": true, "defaultValue": "0" },
+            { "fieldLabel": "Escalations (minutes)", "fieldName": "escalation", "fieldType": "number", "requiredField": true, "defaultValue": "0" },
+            { "fieldLabel": "Maintenance (minutes)", "fieldName": "maintenance", "fieldType": "number", "requiredField": true, "defaultValue": "0" }
+          ]
+        },
+        "options": {
+          "limitWaitTime": { "values": { "limitType": "afterTimeInterval", "resumeAmount": 3, "resumeUnit": "days" } },
+          "responseFormTitle": "Weekly AI time check-in",
+          "appendAttribution": false
+        }
+      },
+      "id": "a1f0e2c4-7b2d-4a39-8f3e-2c9d6e0b1003",
+      "name": "Ask owner by email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [480, 0],
+      "notes": "Needs an SMTP credential. Swap for Slack (Send and Wait) or a WhatsApp node if your team prefers. TODO: after import, confirm the From/To fields show for the Send and Wait operation in your n8n version."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Turn each form response into human-time records. Unanswered requests (timed out) are skipped.\n// TODO: confirm the form answers arrive under $json.data in your n8n version (Send and Wait output).\nconst asked = $('Deployments and last week').all();\nconst out = [];\n$input.all().forEach((item, i) => {\n  const answers = item.json.data || item.json;\n  const d = asked[i]?.json;\n  if (!d || !answers) return;\n  for (const activity of ['review', 'fix', 'escalation', 'maintenance']) {\n    const minutes = Number(answers[activity]);\n    if (!Number.isFinite(minutes) || minutes <= 0) continue;\n    out.push({\n      deployment_ref: d.deployment_ref,\n      period_start: d.period_start,\n      period_end: d.period_end,\n      activity,\n      minutes,\n      logged_by: d.owner_email,\n      // Stable id: re-running the check-in for the same week updates, never duplicates.\n      external_id: `n8n-checkin:${d.deployment_ref}:${d.period_start}:${activity}`,\n    });\n  }\n});\nreturn out.length ? [{ json: { records: out } }] : [];"
+      },
+      "id": "a1f0e2c4-7b2d-4a39-8f3e-2c9d6e0b1004",
+      "name": "Build human-time records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR-LEDGER-DOMAIN/api/ingest/human-time",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ records: $json.records }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "a1f0e2c4-7b2d-4a39-8f3e-2c9d6e0b1005",
+      "name": "POST human time to ledger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [960, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Credential: Header Auth, Name = x-ingest-key, Value = your ingest key. Replace YOUR-LEDGER-DOMAIN."
+    }
+  ],
+  "connections": {
+    "Every Monday 09:00": { "main": [[{ "node": "Deployments and last week", "type": "main", "index": 0 }]] },
+    "Deployments and last week": { "main": [[{ "node": "Ask owner by email", "type": "main", "index": 0 }]] },
+    "Ask owner by email": { "main": [[{ "node": "Build human-time records", "type": "main", "index": 0 }]] },
+    "Build human-time records": { "main": [[{ "node": "POST human time to ledger", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false }
+}

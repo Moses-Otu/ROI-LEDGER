@@ -1,0 +1,143 @@
+{
+  "name": "AI ROI Ledger – Alerts and monthly report",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "roi-ledger-events",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2001",
+      "name": "Ledger webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [0, 0],
+      "webhookId": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2001",
+      "notes": "Copy the Production URL into the ledger: Settings → Webhooks → Add webhook."
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ JSON.stringify($json.body) }}",
+        "dataPropertyName": "expected_signature",
+        "secret": "REPLACE-WITH-WEBHOOK-SIGNING-SECRET",
+        "encoding": "hex"
+      },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2002",
+      "name": "Compute HMAC",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [240, 0],
+      "notes": "Paste the signing secret shown once when you created the webhook. The ledger signs the exact JSON it sends; re-serialising the parsed body reproduces it. TODO: if your n8n version re-orders keys, enable the Webhook's Raw Body option and hash the raw body instead."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "sig-check",
+              "leftValue": "={{ 'sha256=' + $json.expected_signature }}",
+              "rightValue": "={{ $json.headers['x-signature'] }}",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2003",
+      "name": "Signature valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [480, 0]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true } }}", "options": { "responseCode": 200 } },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2004",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [720, -120]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ { error: 'invalid signature' } }}", "options": { "responseCode": 401 } },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2005",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [720, 120]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Turn the ledger event into a subject + plain-text message.\nconst { event, data } = $('Ledger webhook').first().json.body;\nconst money = (v) => v === null || v === undefined ? '—' : `${data.currency ?? ''} ${Number(v).toLocaleString('en-GB', { maximumFractionDigits: 0 })}`;\nlet subject;\nlet text;\nif (event === 'deployment.flag_changed') {\n  subject = data.test ? 'Test alert from AI ROI Ledger' : `${data.name}: flag changed ${data.previous_flag} → ${data.flag}`;\n  text = data.test ? data.message : [\n    `${data.name} is now flagged ${data.flag.toUpperCase()} (was ${data.previous_flag}).`,\n    ...(data.reasons ?? []).map((r) => `• ${r}`),\n    `Net to date: ${money(data.net)} · ROI: ${data.roi === null ? '—' : Math.round(data.roi * 100) + '%'} · Confidence: ${data.confidence}`,\n  ].join('\\n');\n} else if (event === 'deployment.cost_per_run_spike') {\n  subject = `${data.name}: cost per run up ${data.change_pct}% week on week`;\n  text = `Cost per completed run rose from ${money(data.cost_per_run_last_week)} to ${money(data.cost_per_run_this_week)} (alert threshold ${data.threshold_pct}%).`;\n} else if (event === 'snapshot.monthly_summary') {\n  subject = `AI ROI summary for ${data.month}`;\n  text = [\n    `Totals to date: cost ${money(data.totals.cost_total)}, value ${money(data.totals.value_total)}, net ${money(data.totals.net)}.`,\n    '',\n    ...data.deployments.map((d) => `${d.name}: net ${money(d.net)}, flag ${d.flag}, payback ${d.payback_date ?? '—'}${d.payback_projected ? ' (projected)' : ''}, confidence ${d.confidence}`),\n  ].join('\\n');\n} else {\n  subject = `AI ROI Ledger: ${event}`;\n  text = JSON.stringify(data, null, 2);\n}\nreturn [{ json: { event, subject, text } }];"
+      },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2006",
+      "name": "Format message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, -120]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "fromEmail": "ledger@example.com",
+        "toEmail": "ai-owners@example.com",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": { "appendAttribution": false }
+      },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2007",
+      "name": "Email alert / monthly summary",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1200, -200],
+      "notes": "Needs an SMTP credential. Set To: the person who should get alerts and the monthly summary."
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": { "__rl": true, "mode": "name", "value": "#ai-roi" },
+        "messageType": "text",
+        "text": "={{ '*' + $json.subject + '*\\n' + $json.text }}",
+        "otherOptions": { "includeLinkToWorkflow": false }
+      },
+      "id": "c3e7a9b1-5d2f-4e8a-9c1b-7f4d2a6e2008",
+      "name": "Slack (optional)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [1200, -40],
+      "disabled": true,
+      "notes": "Optional: enable, add a Slack credential and pick the channel."
+    }
+  ],
+  "connections": {
+    "Ledger webhook": { "main": [[{ "node": "Compute HMAC", "type": "main", "index": 0 }]] },
+    "Compute HMAC": { "main": [[{ "node": "Signature valid?", "type": "main", "index": 0 }]] },
+    "Signature valid?": {
+      "main": [
+        [{ "node": "Respond 200", "type": "main", "index": 0 }],
+        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+      ]
+    },
+    "Respond 200": { "main": [[{ "node": "Format message", "type": "main", "index": 0 }]] },
+    "Format message": {
+      "main": [
+        [
+          { "node": "Email alert / monthly summary", "type": "main", "index": 0 },
+          { "node": "Slack (optional)", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false }
+}

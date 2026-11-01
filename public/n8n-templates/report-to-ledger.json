@@ -1,0 +1,59 @@
+{
+  "name": "AI ROI Ledger – Report run (sub-workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            { "name": "deployment_ref", "type": "string" },
+            { "name": "execution_id", "type": "string" },
+            { "name": "status", "type": "string" },
+            { "name": "started_at", "type": "string" },
+            { "name": "finished_at", "type": "string" },
+            { "name": "token_cost", "type": "number" },
+            { "name": "model", "type": "string" }
+          ]
+        }
+      },
+      "id": "6d0c3b7e-1a51-4c4f-9a3a-8b1f5c0d0001",
+      "name": "When called by another workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR-LEDGER-DOMAIN/api/ingest/runs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ records: [{ deployment_ref: $json.deployment_ref, external_id: 'n8n:' + $json.execution_id, source: 'n8n', started_at: $json.started_at || $now.toISO(), finished_at: $json.finished_at || $now.toISO(), status: ['success','failed','needs_human'].includes($json.status) ? $json.status : 'success', token_cost: $json.token_cost === undefined || $json.token_cost === '' ? null : Number($json.token_cost), model: $json.model || null }] }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "6d0c3b7e-1a51-4c4f-9a3a-8b1f5c0d0002",
+      "name": "POST run to ledger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [260, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput",
+      "notes": "Credential: Header Auth with Name = x-ingest-key and Value = your ingest key (Settings → Ingest keys). Replace YOUR-LEDGER-DOMAIN. Errors don't fail the calling workflow."
+    }
+  ],
+  "connections": {
+    "When called by another workflow": {
+      "main": [[{ "node": "POST run to ledger", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "description": "Call this from the end of any workflow with Execute Workflow. Pass execution_id = {{ $execution.id }} from the CALLING workflow (inside this sub-workflow $execution.id is the sub-workflow's own id). external_id becomes n8n:<execution id>, which is the same key the n8n connector and Langfuse matching use, so re-sends update instead of duplicating."
+  }
+}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { requireOrg } from "@/lib/dal";
+import { OrgSwitcher } from "./org-switcher";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -42,8 +43,9 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 }
 
 async function OrgName() {
-  const { org } = await requireOrg();
-  return <span className="hidden max-w-48 truncate sm:inline">{org.name}</span>;
+  const { org, memberships } = await requireOrg();
+  if (memberships.length < 2) return <span className="hidden max-w-48 truncate sm:inline">{org.name}</span>;
+  return <OrgSwitcher current={org.id} orgs={memberships} />;
 }
 
 async function DemoBanner() {

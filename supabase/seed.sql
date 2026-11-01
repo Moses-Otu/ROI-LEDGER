@@ -1,0 +1,3 @@
+-- No static seed rows: demo data needs a signed-in owner.
+-- Sign in, then click "Explore with demo data" on the onboarding screen, which calls
+-- public.create_demo_org() (see migrations/20261101000005_demo_data.sql).

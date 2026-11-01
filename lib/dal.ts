@@ -1,4 +1,5 @@
 import "server-only";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,19 +23,23 @@ export async function requireUser() {
   return { supabase, userId: claims.sub as string, email: (claims.email as string) ?? null };
 }
 
+export const ORG_COOKIE = "roi_org";
+
 /**
- * The user's organisation (MVP: their first membership) and role.
- * Redirects to onboarding when they don't belong to one yet.
+ * The user's current organisation and role: the one picked in the org switcher
+ * (cookie), else their first membership. Redirects to onboarding when they
+ * don't belong to one yet. The cookie is only a preference; membership is
+ * always checked.
  */
 export async function requireOrg() {
   const { supabase, userId, email } = await requireUser();
-  const { data: membership } = await supabase
+  const { data: memberships } = await supabase
     .from("org_members")
-    .select("role, organisations(*)")
+    .select("org_id, role, organisations(*)")
     .eq("user_id", userId)
-    .order("created_at")
-    .limit(1)
-    .maybeSingle();
+    .order("created_at");
+  const preferred = (await cookies()).get(ORG_COOKIE)?.value;
+  const membership = memberships?.find((m) => m.org_id === preferred) ?? memberships?.[0];
   if (!membership?.organisations) redirect("/onboarding");
   const org = membership.organisations as unknown as CurrentOrg;
   return {
@@ -44,6 +49,10 @@ export async function requireOrg() {
     org: { ...org, default_loaded_hourly_rate: Number(org.default_loaded_hourly_rate) },
     role: membership.role as "admin" | "member",
     isAdmin: membership.role === "admin",
+    memberships: (memberships ?? []).map((m) => ({
+      id: m.org_id as string,
+      name: (m.organisations as unknown as CurrentOrg).name,
+    })),
   };
 }
 
