@@ -1,6 +1,6 @@
 import "server-only";
 import { after, NextResponse, type NextRequest } from "next/server";
-import { recalculateDeployment } from "@/lib/ledger/recalculate";
+import { recalculateAndNotify } from "@/lib/ledger/pipeline";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authenticateIngestKey } from "./auth";
 import { extractRecords, type IngestKind } from "./schemas";
@@ -23,11 +23,7 @@ export function ingestHandler(kind: IngestKind) {
     try {
       const result = await ingestBatch(db, orgId, kind, extractRecords(body), "push");
       // Refresh today's snapshot for touched deployments once the response is sent.
-      after(async () => {
-        for (const id of result.deploymentIds) {
-          await recalculateDeployment(db, id).catch((e) => console.error("recalculate failed", id, e));
-        }
-      });
+      after(() => recalculateAndNotify(db, result.deploymentIds).then(() => undefined));
       const status = result.written === 0 && result.errors.length ? 422 : 200;
       return NextResponse.json(
         { received: result.received, written: result.written, errors: result.errors },
