@@ -77,7 +77,7 @@ Prerequisites: Node 22+, Docker Desktop (for the local Supabase stack).
 
 5. Open http://localhost:3000 and sign in with any email. Locally, magic-link emails land in Mailpit at http://127.0.0.1:55424.
 
-6. On the onboarding screen you can create your own organisation, or click **Explore with demo data**. That creates a separate, clearly labelled *Demo Co (DEMO DATA)* org with six months of fake data for a "Procurement assistant". Delete it in **Settings → Demo data**: one click, cascading delete.
+6. On the onboarding screen, create your organisation (name, currency, default loaded hourly rate).
 
 `npm run db:reset` re-applies all migrations to the local database. **It wipes local data.**
 
@@ -280,7 +280,7 @@ TODOs in the templates (left as notes on the nodes rather than guessed):
 app/
   (app)/deployments/…        list, detail dashboard, forms (new, edit, baseline, log)
   (app)/import/              CSV import with preview
-  (app)/settings/            org, thresholds, connectors, ingest keys, webhooks, templates, demo data
+  (app)/settings/            org, thresholds, connectors, ingest keys, webhooks, templates
   api/ingest/{runs,costs,human-time}/   push API
   api/cron/sync/             daily sync + recalc + webhooks
   api/templates/[kind]/      CSV templates
@@ -292,7 +292,7 @@ lib/
   webhooks/     events, HMAC signing, delivery + tests
   ledger/       load data → calculate → snapshot; daily pipeline
   crypto/       AES-256-GCM for secrets
-supabase/migrations/   schema, RLS, ingest functions, views, demo-data generator
+supabase/migrations/   schema, RLS, ingest functions, views
 public/n8n-templates/  importable n8n workflows
 ```
 

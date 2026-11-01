@@ -13,7 +13,6 @@ export interface CurrentOrg {
   default_loaded_hourly_rate: number;
   productive_hours_per_year: number;
   flag_thresholds: Record<string, number>;
-  is_demo: boolean;
 }
 
 /**

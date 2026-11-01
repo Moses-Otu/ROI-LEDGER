@@ -7,7 +7,6 @@ import { WEBHOOK_EVENTS } from "@/lib/webhooks/events";
 import {
   ConnectorActions,
   CreateConnectorForm,
-  DeleteDemoButton,
   IngestKeyForm,
   OrgForm,
   RevokeKeyButton,
@@ -233,11 +232,6 @@ export default async function SettingsPage() {
         </div>
       </Section>
 
-      {org.is_demo && (
-        <Section title="Demo data" description="This organisation holds fake demo data. Deleting it removes every row in it.">
-          <DeleteDemoButton />
-        </Section>
-      )}
     </div>
   );
 }

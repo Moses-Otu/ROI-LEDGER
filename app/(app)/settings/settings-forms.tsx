@@ -14,7 +14,6 @@ import {
   createIngestKey,
   createWebhook,
   deleteConnector,
-  deleteDemoOrg,
   deleteWebhook,
   revokeIngestKey,
   setConnectorPaused,
@@ -260,15 +259,3 @@ export function WebhookActions({ id, active }: { id: string; active: boolean }) 
   );
 }
 
-export function DeleteDemoButton() {
-  const [pending, start] = useTransition();
-  return (
-    <Button
-      variant="destructive"
-      disabled={pending}
-      onClick={() => confirm("Delete the demo organisation and all its data? This can't be undone.") && start(() => deleteDemoOrg())}
-    >
-      {pending ? "Deleting…" : "Delete demo data"}
-    </Button>
-  );
-}
