@@ -3,15 +3,19 @@ import { Suspense } from "react";
 import { requireOrg } from "@/lib/dal";
 import { OrgSwitcher } from "./org-switcher";
 
+// Every page here reads the session, so navigations wait on the server by design.
+export const instant = false;
+
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="border-b">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-4 px-4">
-          <Link href="/deployments" className="font-semibold tracking-tight">
-            AI ROI Ledger
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4">
+          <Link href="/deployments" className="shrink-0 font-semibold tracking-tight">
+            <span className="sm:hidden">ROI</span>
+            <span className="hidden sm:inline">AI ROI Ledger</span>
           </Link>
-          <nav className="flex gap-1 text-sm">
+          <nav className="-mx-1 flex min-w-0 gap-1 overflow-x-auto text-sm">
             <NavLink href="/deployments">Deployments</NavLink>
             <NavLink href="/import">Import</NavLink>
             <NavLink href="/settings">Settings</NavLink>

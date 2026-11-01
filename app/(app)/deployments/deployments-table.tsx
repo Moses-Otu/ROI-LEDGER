@@ -80,7 +80,7 @@ export function DeploymentsTable({ rows, currency }: { rows: DeploymentRow[]; cu
           {sorted.map((r) => (
             <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
               <td className="px-3 py-2.5">
-                <Link href={`/deployments/${r.id}`} className="font-medium hover:underline">
+                <Link href={`/deployments/${r.id}`} prefetch={false} className="font-medium hover:underline">
                   {r.name}
                 </Link>
               </td>

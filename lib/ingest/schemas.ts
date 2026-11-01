@@ -22,7 +22,8 @@ const isoDateTime = z.iso.datetime({ offset: true });
 
 /** Identify the deployment by id, or by any value in its external_refs. */
 const deploymentTarget = {
-  deployment_id: z.uuid().optional(),
+  // guid(): any 8-4-4-4-12 id; z.uuid() would reject ids without an RFC version nibble.
+  deployment_id: z.guid().optional(),
   deployment_ref: z.string().min(1).max(200).optional(),
 };
 

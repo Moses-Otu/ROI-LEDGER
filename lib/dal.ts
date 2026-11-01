@@ -1,6 +1,8 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export interface CurrentOrg {
@@ -14,14 +16,19 @@ export interface CurrentOrg {
   is_demo: boolean;
 }
 
-/** The signed-in user, or a redirect to /login. Verifies the JWT (getClaims). */
-export async function requireUser() {
+/**
+ * The signed-in user, or a redirect to /login. Verifies the JWT (getClaims).
+ * cache(): the layout and page share one session check per request.
+ */
+export const requireUser = cache(async () => {
+  // Session reads are always per-request; the auth client also reads the clock.
+  await connection();
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
   if (!claims?.sub) redirect("/login");
   return { supabase, userId: claims.sub as string, email: (claims.email as string) ?? null };
-}
+});
 
 export const ORG_COOKIE = "roi_org";
 
@@ -29,9 +36,9 @@ export const ORG_COOKIE = "roi_org";
  * The user's current organisation and role: the one picked in the org switcher
  * (cookie), else their first membership. Redirects to onboarding when they
  * don't belong to one yet. The cookie is only a preference; membership is
- * always checked.
+ * always checked. Cached per request like requireUser.
  */
-export async function requireOrg() {
+export const requireOrg = cache(async () => {
   const { supabase, userId, email } = await requireUser();
   const { data: memberships } = await supabase
     .from("org_members")
@@ -54,7 +61,7 @@ export async function requireOrg() {
       name: (m.organisations as unknown as CurrentOrg).name,
     })),
   };
-}
+});
 
 export async function requireAdmin() {
   const ctx = await requireOrg();

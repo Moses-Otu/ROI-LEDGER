@@ -41,6 +41,8 @@ export function CostValueChart({
   const [view, setView] = useState<"chart" | "table">("chart");
   const data = downsample(series);
   const last = series.at(-1);
+  // One tick per month (its first plotted day), so month labels never repeat.
+  const monthTicks = data.filter((d, i) => i === 0 || d.date.slice(0, 7) !== data[i - 1].date.slice(0, 7)).map((d) => d.date);
   // Only mark payback on the chart when it falls inside the plotted range.
   const paybackInRange = paybackDate && !paybackProjected && data.some((d) => d.date >= paybackDate);
 
@@ -80,6 +82,8 @@ export function CostValueChart({
               <CartesianGrid stroke="#e5e5e5" strokeDasharray="0" vertical={false} />
               <XAxis
                 dataKey="date"
+                ticks={monthTicks}
+                interval="preserveStartEnd"
                 tickFormatter={(d: string) =>
                   new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" })
                 }

@@ -41,6 +41,13 @@ describe("schemas", () => {
     expect(errors).toEqual([]);
   });
 
+  it("accepts any well-formed deployment id", () => {
+    const { errors } = validateRecords(ingestSchemas.runs, [
+      { ...run, deployment_ref: undefined, deployment_id: "22222222-2222-2222-2222-222222222222" },
+    ]);
+    expect(errors).toEqual([]);
+  });
+
   it("validates cost periods", () => {
     const { errors } = validateRecords(ingestSchemas.costs, [
       { deployment_ref: "x", category: "hosting", is_one_off: false, amount: 10, period_start: "2026-10-31", period_end: "2026-10-01" },
