@@ -81,6 +81,10 @@ Prerequisites: Node 22+, Docker Desktop (for the local Supabase stack).
 
 `npm run db:reset` re-applies all migrations to the local database. **It wipes local data.**
 
+### Temporary one-click sign-in
+
+Set `OPEN_LOGIN=true` to replace email sign-in with a single **Sign in** button. Everyone who clicks it shares one account (`team@roi-ledger.invalid`, no email is ever sent), with full access, including settings, ingest keys, connectors and webhooks. Use it only while trying the app out: anyone with the URL gets in. Remove the variable (or set it to `false`) and redeploy to go back to magic-link sign-in; the shared account and its data stay in the database.
+
 ## Supabase setup (hosted)
 
 1. Create a project. On the free tier this has no cost; paid tiers do.
