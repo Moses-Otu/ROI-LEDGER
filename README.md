@@ -91,7 +91,7 @@ Prerequisites: Node 22+, Docker Desktop (for the local Supabase stack).
    ```
 
    ```bash
-   npx supabase db push
+   npx supabase db push --linked
    ```
 
 3. Configure **Authentication → URL configuration**:
