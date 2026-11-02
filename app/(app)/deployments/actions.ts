@@ -193,6 +193,25 @@ export async function addCostEntry(deploymentId: string, _prev: FormState, form:
   return { ok: true, message: "Cost added" };
 }
 
+/**
+ * Permanently deletes a deployment and everything recorded for it (runs, costs,
+ * time logs, baselines, snapshots cascade). Admins only; RLS enforces it too.
+ */
+export async function deleteDeployment(deploymentId: string): Promise<{ ok: boolean; message: string }> {
+  const { supabase, org, isAdmin } = await requireOrg();
+  if (!isAdmin) return { ok: false, message: "Only organisation admins can delete a deployment." };
+  const { data, error } = await supabase
+    .from("deployments")
+    .delete()
+    .eq("id", deploymentId)
+    .eq("org_id", org.id)
+    .select("id");
+  if (error) return { ok: false, message: error.message };
+  if (!data?.length) return { ok: false, message: "Deployment not found." };
+  revalidatePath("/deployments");
+  redirect("/deployments");
+}
+
 export async function deleteEntry(
   deploymentId: string,
   table: "cost_entries" | "human_time_logs",
