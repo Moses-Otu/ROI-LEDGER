@@ -6,6 +6,7 @@ import { z } from "zod";
 import { issuesToErrors, type FormState } from "@/components/forms/field";
 import { requireOrg } from "@/lib/dal";
 import { recalculateAndNotify } from "@/lib/ledger/pipeline";
+import { nextSetupHref } from "@/lib/setup";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const blankToUndefined = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
@@ -83,7 +84,8 @@ export async function saveDeployment(id: string | null, _prev: FormState, form: 
     : await supabase.from("deployments").insert(row).select("id").single();
   if (error || !data) return { message: error?.message ?? "Could not save" };
   await refresh(data.id);
-  redirect(`/deployments/${data.id}`);
+  // Guided setup: a new deployment goes to the baseline step; edits go to the next unfinished step.
+  redirect(id ? await nextSetupHref(supabase, data.id) : `/deployments/${data.id}/baseline`);
 }
 
 const baselineSchema = z.object({
@@ -118,7 +120,7 @@ export async function saveBaseline(deploymentId: string, _prev: FormState, form:
   });
   if (error) return { message: error.message };
   await refresh(deploymentId);
-  redirect(`/deployments/${deploymentId}`);
+  redirect(await nextSetupHref(supabase, deploymentId));
 }
 
 const humanTimeSchema = z.object({

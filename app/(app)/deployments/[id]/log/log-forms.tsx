@@ -34,10 +34,10 @@ export function HumanTimeForm({ deploymentId }: { deploymentId: string }) {
   return (
     <form ref={ref} action={action} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="From" htmlFor="ht_start" error={e.period_start}>
+        <Field label="From" htmlFor="ht_start" info="ht_period" error={e.period_start}>
           <Input id="ht_start" name="period_start" type="date" defaultValue={start} required />
         </Field>
-        <Field label="To" htmlFor="ht_end" error={e.period_end}>
+        <Field label="To" htmlFor="ht_end" info="ht_period" error={e.period_end}>
           <Input id="ht_end" name="period_end" type="date" defaultValue={end} required />
         </Field>
       </div>
@@ -50,16 +50,16 @@ export function HumanTimeForm({ deploymentId }: { deploymentId: string }) {
             ["maintenance", "Maintenance"],
           ] as const
         ).map(([name, label]) => (
-          <Field key={name} label={label} htmlFor={`ht_${name}`} error={e[name]}>
+          <Field key={name} label={label} htmlFor={`ht_${name}`} info={`ht_${name}`} error={e[name]}>
             <Input id={`ht_${name}`} name={name} type="number" min="0" step="any" inputMode="numeric" placeholder="min" />
           </Field>
         ))}
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Hourly rate (optional)" htmlFor="ht_rate" hint="Blank uses the baseline rate.">
+        <Field label="Hourly rate (optional)" htmlFor="ht_rate" info="ht_rate" hint="Blank uses the baseline rate.">
           <Input id="ht_rate" name="hourly_rate" type="number" min="0" step="0.01" />
         </Field>
-        <Field label="Logged by" htmlFor="ht_by">
+        <Field label="Logged by" htmlFor="ht_by" info="ht_by">
           <Input id="ht_by" name="logged_by" />
         </Field>
       </div>
@@ -81,7 +81,7 @@ export function CostEntryForm({ deploymentId, currency }: { deploymentId: string
   return (
     <form ref={ref} action={action} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Category" htmlFor="c_category" error={e.category}>
+        <Field label="Category" htmlFor="c_category" info="cost_category" error={e.category}>
           <NativeSelect
             id="c_category"
             name="category"
@@ -90,7 +90,7 @@ export function CostEntryForm({ deploymentId, currency }: { deploymentId: string
             )}
           />
         </Field>
-        <Field label="Kind" htmlFor="c_kind" error={e.is_one_off}>
+        <Field label="Kind" htmlFor="c_kind" info="cost_kind" error={e.is_one_off}>
           <NativeSelect
             id="c_kind"
             name="is_one_off"
@@ -103,20 +103,20 @@ export function CostEntryForm({ deploymentId, currency }: { deploymentId: string
           />
         </Field>
       </div>
-      <Field label={`Amount (${currency})`} htmlFor="c_amount" error={e.amount}>
+      <Field label={`Amount (${currency})`} htmlFor="c_amount" info="cost_amount" error={e.amount}>
         <Input id="c_amount" name="amount" type="number" min="0" step="0.01" required />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={oneOff === "true" ? "Date" : "Period start"} htmlFor="c_start" error={e.period_start}>
+        <Field label={oneOff === "true" ? "Date" : "Period start"} htmlFor="c_start" info="cost_start" error={e.period_start}>
           <Input id="c_start" name="period_start" type="date" required />
         </Field>
         {oneOff === "false" && (
-          <Field label="Period end" htmlFor="c_end" hint="Spread evenly across these days." error={e.period_end}>
+          <Field label="Period end" htmlFor="c_end" info="cost_end" hint="Spread evenly across these days." error={e.period_end}>
             <Input id="c_end" name="period_end" type="date" required />
           </Field>
         )}
       </div>
-      <Field label="Notes" htmlFor="c_notes">
+      <Field label="Notes" htmlFor="c_notes" info="cost_notes">
         <Input id="c_notes" name="notes" />
       </Field>
       {state.message && !state.ok && <p className="text-sm text-destructive">{state.message}</p>}

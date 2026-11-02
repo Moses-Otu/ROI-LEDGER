@@ -1,23 +1,31 @@
 import type { ReactNode } from "react";
 import { Label } from "@/components/ui/label";
+import { HELP, type HelpKey } from "@/lib/help";
+import { InfoTip } from "./info-tip";
 
-/** Label + control + optional hint/error, stacked. */
+/** Label (with optional ⓘ help) + control + optional hint/error, stacked. */
 export function Field({
   label,
   htmlFor,
   hint,
   error,
+  info,
   children,
 }: {
   label: string;
   htmlFor: string;
   hint?: ReactNode;
   error?: string;
+  /** Key into lib/help.ts; shows an ⓘ popover next to the label. */
+  info?: HelpKey;
   children: ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={htmlFor}>{label}</Label>
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor={htmlFor}>{label}</Label>
+        {info && <InfoTip help={HELP[info]} label={label} />}
+      </div>
       {children}
       {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}

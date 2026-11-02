@@ -40,11 +40,11 @@ export function DeploymentForm({ values = {}, currency }: { values?: DeploymentF
     <form action={action} className="max-w-2xl space-y-8">
       <section className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <Field label="Name" htmlFor="name" error={e.name}>
+          <Field label="Name" htmlFor="name" info="dep_name" error={e.name}>
             <Input id="name" name="name" defaultValue={values.name} required />
           </Field>
         </div>
-        <Field label="Type" htmlFor="type" error={e.type}>
+        <Field label="Type" htmlFor="type" info="dep_type" error={e.type}>
           <NativeSelect
             id="type"
             name="type"
@@ -57,7 +57,7 @@ export function DeploymentForm({ values = {}, currency }: { values?: DeploymentF
             ]}
           />
         </Field>
-        <Field label="Status" htmlFor="status" error={e.status}>
+        <Field label="Status" htmlFor="status" info="dep_status" error={e.status}>
           <NativeSelect
             id="status"
             name="status"
@@ -71,31 +71,31 @@ export function DeploymentForm({ values = {}, currency }: { values?: DeploymentF
           />
         </Field>
         <div className="sm:col-span-2">
-          <Field label="Task it replaces" htmlFor="task_replaced" hint="What people did by hand before, e.g. 'Raising and approving purchase requests by email'." error={e.task_replaced}>
+          <Field label="Task it replaces" htmlFor="task_replaced" info="dep_task" hint="What people did by hand before, e.g. 'Raising and approving purchase requests by email'." error={e.task_replaced}>
             <Input id="task_replaced" name="task_replaced" defaultValue={values.task_replaced ?? ""} />
           </Field>
         </div>
         <div className="sm:col-span-2">
-          <Field label="Description" htmlFor="description" error={e.description}>
+          <Field label="Description" htmlFor="description" info="dep_description" error={e.description}>
             <Textarea id="description" name="description" rows={3} defaultValue={values.description ?? ""} />
           </Field>
         </div>
-        <Field label="Owner" htmlFor="owner_name" error={e.owner_name}>
+        <Field label="Owner" htmlFor="owner_name" info="dep_owner" error={e.owner_name}>
           <Input id="owner_name" name="owner_name" defaultValue={values.owner_name ?? ""} />
         </Field>
-        <Field label="Owner contact" htmlFor="owner_contact" hint="Email used for the weekly human-time check-in." error={e.owner_contact}>
+        <Field label="Owner contact" htmlFor="owner_contact" info="dep_owner_contact" hint="Email used for the weekly human-time check-in." error={e.owner_contact}>
           <Input id="owner_contact" name="owner_contact" defaultValue={values.owner_contact ?? ""} />
         </Field>
-        <Field label="Go-live date" htmlFor="go_live_date" error={e.go_live_date}>
+        <Field label="Go-live date" htmlFor="go_live_date" info="dep_go_live" error={e.go_live_date}>
           <Input id="go_live_date" name="go_live_date" type="date" defaultValue={values.go_live_date ?? ""} />
         </Field>
-        <Field label="Expected life (months)" htmlFor="expected_life_months" error={e.expected_life_months}>
+        <Field label="Expected life (months)" htmlFor="expected_life_months" info="dep_life" error={e.expected_life_months}>
           <Input id="expected_life_months" name="expected_life_months" type="number" min="1" defaultValue={values.expected_life_months ?? 24} />
         </Field>
-        <Field label={`Predicted monthly value (${currency})`} htmlFor="predicted_monthly_value" hint="From the business case. Used for the scale flag." error={e.predicted_monthly_value}>
+        <Field label={`Predicted monthly value (${currency})`} htmlFor="predicted_monthly_value" info="dep_pred_value" hint="From the business case. Used for the scale flag." error={e.predicted_monthly_value}>
           <Input id="predicted_monthly_value" name="predicted_monthly_value" type="number" min="0" step="0.01" defaultValue={values.predicted_monthly_value ?? ""} />
         </Field>
-        <Field label={`Predicted monthly cost (${currency})`} htmlFor="predicted_monthly_cost" error={e.predicted_monthly_cost}>
+        <Field label={`Predicted monthly cost (${currency})`} htmlFor="predicted_monthly_cost" info="dep_pred_cost" error={e.predicted_monthly_cost}>
           <Input id="predicted_monthly_cost" name="predicted_monthly_cost" type="number" min="0" step="0.01" defaultValue={values.predicted_monthly_cost ?? ""} />
         </Field>
       </section>
@@ -108,16 +108,16 @@ export function DeploymentForm({ values = {}, currency }: { values?: DeploymentF
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="n8n workflow IDs" htmlFor="n8n_workflow_ids">
+          <Field label="n8n workflow IDs" htmlFor="n8n_workflow_ids" info="dep_n8n">
             <Input id="n8n_workflow_ids" name="n8n_workflow_ids" defaultValue={(refs.n8n_workflow_ids ?? []).join(", ")} />
           </Field>
-          <Field label="Langfuse trace tags" htmlFor="langfuse_tags">
+          <Field label="Langfuse trace tags" htmlFor="langfuse_tags" info="dep_lf_tags">
             <Input id="langfuse_tags" name="langfuse_tags" defaultValue={(refs.langfuse_tags ?? []).join(", ")} />
           </Field>
-          <Field label="Langfuse project" htmlFor="langfuse_project">
+          <Field label="Langfuse project" htmlFor="langfuse_project" info="dep_lf_project">
             <Input id="langfuse_project" name="langfuse_project" defaultValue={refs.langfuse_project ?? ""} />
           </Field>
-          <Field label="OpenRouter key label" htmlFor="openrouter_key_label">
+          <Field label="OpenRouter key label" htmlFor="openrouter_key_label" info="dep_or_label">
             <Input id="openrouter_key_label" name="openrouter_key_label" defaultValue={refs.openrouter_key_label ?? ""} />
           </Field>
         </div>

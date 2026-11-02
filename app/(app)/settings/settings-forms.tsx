@@ -38,19 +38,19 @@ export function OrgForm({ org }: { org: CurrentOrg }) {
   const e = state.errors ?? {};
   return (
     <form action={action} className="grid max-w-2xl gap-4 sm:grid-cols-2">
-      <Field label="Name" htmlFor="org_name" error={e.name}>
+      <Field label="Name" htmlFor="org_name" info="org_name" error={e.name}>
         <Input id="org_name" name="name" defaultValue={org.name} required />
       </Field>
-      <Field label="Industry" htmlFor="org_industry" error={e.industry}>
+      <Field label="Industry" htmlFor="org_industry" info="org_industry" error={e.industry}>
         <Input id="org_industry" name="industry" defaultValue={org.industry ?? ""} />
       </Field>
-      <Field label="Currency" htmlFor="org_currency" hint="Changing it does not convert existing amounts." error={e.currency}>
+      <Field label="Currency" htmlFor="org_currency" info="org_currency" hint="Changing it does not convert existing amounts." error={e.currency}>
         <NativeSelect id="org_currency" name="currency" defaultValue={org.currency} options={currencyOptions(org.currency)} required />
       </Field>
-      <Field label="Default loaded hourly rate" htmlFor="org_rate" error={e.default_loaded_hourly_rate}>
+      <Field label="Default loaded hourly rate" htmlFor="org_rate" info="org_rate" error={e.default_loaded_hourly_rate}>
         <Input id="org_rate" name="default_loaded_hourly_rate" type="number" min="0" step="0.01" defaultValue={org.default_loaded_hourly_rate} />
       </Field>
-      <Field label="Productive hours per year" htmlFor="org_hours" error={e.productive_hours_per_year}>
+      <Field label="Productive hours per year" htmlFor="org_hours" info="org_hours" error={e.productive_hours_per_year}>
         <Input id="org_hours" name="productive_hours_per_year" type="number" min="1" defaultValue={org.productive_hours_per_year} />
       </Field>
       <div className="flex items-center gap-3 sm:col-span-2">
@@ -67,22 +67,22 @@ export function ThresholdsForm({ thresholds: t }: { thresholds: FlagThresholds }
   const e = state.errors ?? {};
   return (
     <form action={action} className="grid max-w-2xl gap-4 sm:grid-cols-3">
-      <Field label="Scale: ROI above" htmlFor="t1" hint="1 = 100% return" error={e.scale_min_roi}>
+      <Field label="Scale: ROI above" htmlFor="t1" info="th_scale_roi" hint="1 = 100% return" error={e.scale_min_roi}>
         <Input id="t1" name="scale_min_roi" type="number" step="0.05" defaultValue={t.scale_min_roi} />
       </Field>
-      <Field label="Fix: human-touch above (%)" htmlFor="t2" error={e.fix_max_human_touch_rate}>
+      <Field label="Fix: human-touch above (%)" htmlFor="t2" info="th_fix_touch" error={e.fix_max_human_touch_rate}>
         <Input id="t2" name="fix_max_human_touch_rate" type="number" step="1" defaultValue={pct(t.fix_max_human_touch_rate)} />
       </Field>
-      <Field label="Fix: healthy volume from (%)" htmlFor="t3" hint="Of baseline volume" error={e.fix_healthy_volume_ratio}>
+      <Field label="Fix: healthy volume from (%)" htmlFor="t3" info="th_fix_volume" hint="Of baseline volume" error={e.fix_healthy_volume_ratio}>
         <Input id="t3" name="fix_healthy_volume_ratio" type="number" step="1" defaultValue={pct(t.fix_healthy_volume_ratio)} />
       </Field>
-      <Field label="Kill: live more than (days)" htmlFor="t4" error={e.kill_min_days_live}>
+      <Field label="Kill: live more than (days)" htmlFor="t4" info="th_kill_days" error={e.kill_min_days_live}>
         <Input id="t4" name="kill_min_days_live" type="number" step="1" defaultValue={t.kill_min_days_live} />
       </Field>
-      <Field label="Kill: volume below (%)" htmlFor="t5" error={e.kill_max_volume_ratio}>
+      <Field label="Kill: volume below (%)" htmlFor="t5" info="th_kill_volume" error={e.kill_max_volume_ratio}>
         <Input id="t5" name="kill_max_volume_ratio" type="number" step="1" defaultValue={pct(t.kill_max_volume_ratio)} />
       </Field>
-      <Field label="Alert: cost/run rise over (%)" htmlFor="t6" hint="Week on week" error={e.cost_per_run_spike_pct}>
+      <Field label="Alert: cost/run rise over (%)" htmlFor="t6" info="th_spike" hint="Week on week" error={e.cost_per_run_spike_pct}>
         <Input id="t6" name="cost_per_run_spike_pct" type="number" step="1" defaultValue={pct(t.cost_per_run_spike_pct)} />
       </Field>
       <div className="flex items-center gap-3 sm:col-span-3">

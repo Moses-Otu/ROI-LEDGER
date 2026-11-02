@@ -4,13 +4,17 @@ import type { ReactNode } from "react";
 import { ConfidenceBadge, FlagBadge, StatusText } from "@/components/ledger/badges";
 import { CostValueChart } from "@/components/ledger/cost-value-chart";
 import { ExplainButton, ExplainProvider } from "@/components/ledger/explain";
+import { InfoTip } from "@/components/forms/info-tip";
 import { buttonVariants } from "@/components/ui/button";
 import { requireOrg } from "@/lib/dal";
+import { STAT_HELP, type HelpEntry } from "@/lib/help";
 import { formatDate, formatMoney, formatNumber, formatPct, formatRoi } from "@/lib/format";
 import { loadDeploymentContext, todayUtc } from "@/lib/ledger/recalculate";
 import { calculateRoi } from "@/lib/roi";
 import { DAYS_PER_MONTH } from "@/lib/roi/dates";
 import type { KpiKey } from "@/lib/roi/types";
+import { SetupSteps } from "@/components/ledger/setup-steps";
+import { getSetupProgress } from "@/lib/setup";
 import { RecalculateButton } from "./recalculate-button";
 
 export default async function DeploymentPage({ params }: PageProps<"/deployments/[id]">) {
@@ -20,7 +24,7 @@ export default async function DeploymentPage({ params }: PageProps<"/deployments
   if (!owned) notFound();
 
   // Computed live from the same module the daily snapshot uses (RLS-scoped reads).
-  const ctx = await loadDeploymentContext(supabase, id, todayUtc());
+  const [ctx, progress] = await Promise.all([loadDeploymentContext(supabase, id, todayUtc()), getSetupProgress(supabase, id)]);
   const r = calculateRoi(ctx.input);
   const d = ctx.deployment as typeof ctx.deployment & { status: string; go_live_date: string | null };
   const b = ctx.input.baseline;
@@ -66,7 +70,25 @@ export default async function DeploymentPage({ params }: PageProps<"/deployments
           </div>
         </header>
 
-        {!b && (
+        {!progress.complete && progress.next && (
+          <section className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="font-medium">Finish setting up this deployment</h2>
+                <p className="text-sm text-muted-foreground">
+                  {progress.steps.filter((s) => s.done).length} of {progress.steps.length} steps done. The figures below get more
+                  accurate with each one.
+                </p>
+              </div>
+              <Link href={progress.next.path} prefetch={false} className={buttonVariants()}>
+                Continue: {progress.next.label} →
+              </Link>
+            </div>
+            <SetupSteps progress={progress} />
+          </section>
+        )}
+
+        {!b && progress.complete && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             No baseline yet, so value is zero.{" "}
             <Link href={`/deployments/${id}/baseline`} className="font-medium underline">
@@ -109,15 +131,15 @@ export default async function DeploymentPage({ params }: PageProps<"/deployments
 
           <Panel title="Runs">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-              <Stat label="Total runs" value={formatNumber(r.runCounts.total)} />
-              <Stat label="Completed" value={formatNumber(r.runCounts.completed)} />
-              <Stat label="Failed" value={formatNumber(r.runCounts.failed)} />
+              <Stat label="Total runs" value={formatNumber(r.runCounts.total)} help={STAT_HELP.total_runs} />
+              <Stat label="Completed" value={formatNumber(r.runCounts.completed)} help={STAT_HELP.completed} />
+              <Stat label="Failed" value={formatNumber(r.runCounts.failed)} help={STAT_HELP.failed} />
               <Stat label="Success rate" value={formatPct(r.successRate)} k="success_rate" />
               <Stat label="Human-touch rate" value={formatPct(r.humanTouchRate)} k="human_touch_rate" />
-              <Stat label="Data coverage" value={formatPct(r.coverage)} />
-              <Stat label="Volume vs baseline (30d)" value={formatPct(r.volumeRatio)} />
-              <Stat label="Estimated tasks" value={formatNumber(r.runCounts.estimatedCompleted)} hint="Weeks with no run data" />
-              <Stat label="Days live" value={formatNumber(r.daysLive)} />
+              <Stat label="Data coverage" value={formatPct(r.coverage)} help={STAT_HELP.coverage} />
+              <Stat label="Volume vs baseline (30d)" value={formatPct(r.volumeRatio)} help={STAT_HELP.volume_ratio} />
+              <Stat label="Estimated tasks" value={formatNumber(r.runCounts.estimatedCompleted)} help={STAT_HELP.estimated_tasks} />
+              <Stat label="Days live" value={formatNumber(r.daysLive)} help={STAT_HELP.days_live} />
             </dl>
           </Panel>
 
@@ -203,10 +225,25 @@ function Panel({ title, action, children }: { title: string; action?: ReactNode;
   );
 }
 
-function Stat({ label, value, hint, k }: { label: string; value: string; hint?: string; k?: KpiKey }) {
+function Stat({
+  label,
+  value,
+  hint,
+  k,
+  help,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  k?: KpiKey;
+  help?: HelpEntry;
+}) {
   const body = (
     <>
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="flex items-center gap-1 text-muted-foreground">
+        {label}
+        {help && <InfoTip help={help} label={label} />}
+      </dt>
       <dd className="mt-0.5 font-medium tabular-nums capitalize">{value}</dd>
       {hint && <dd className="text-xs text-muted-foreground">{hint}</dd>}
     </>

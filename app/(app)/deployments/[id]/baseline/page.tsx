@@ -1,14 +1,16 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOrg } from "@/lib/dal";
+import { getSetupProgress } from "@/lib/setup";
+import { StepHeader } from "../step-header";
 import { BaselineForm } from "./baseline-form";
 
 export default async function BaselinePage({ params }: PageProps<"/deployments/[id]/baseline">) {
   const { id } = await params;
   const { supabase, org } = await requireOrg();
-  const [{ data: deployment }, { data: baselines }] = await Promise.all([
+  const [{ data: deployment }, { data: baselines }, progress] = await Promise.all([
     supabase.from("deployments").select("id, name, task_replaced").eq("id", id).eq("org_id", org.id).maybeSingle(),
     supabase.from("baselines").select("*").eq("deployment_id", id).order("captured_at", { ascending: false }).limit(1),
+    getSetupProgress(supabase, id),
   ]);
   if (!deployment) notFound();
   const current = baselines?.[0];
@@ -16,16 +18,10 @@ export default async function BaselinePage({ params }: PageProps<"/deployments/[
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
       <div className="space-y-6">
-        <div>
-          <Link href={`/deployments/${id}`} className="text-sm text-muted-foreground hover:underline">
-            ← {deployment.name}
-          </Link>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight">Pre-AI baseline</h1>
-          <p className="text-sm text-muted-foreground">
-            How {deployment.task_replaced ? `"${deployment.task_replaced}"` : "the task"} was done before this deployment.
-            Value is measured against these numbers.
-          </p>
-        </div>
+        <StepHeader deploymentId={id} deploymentName={deployment.name} progress={progress} current="baseline" title="How was it done before AI?">
+          How {deployment.task_replaced ? `"${deployment.task_replaced}"` : "the task"} was done before this deployment.
+          Value is measured against these numbers: each completed task is worth minutes ÷ 60 × hourly rate.
+        </StepHeader>
         <BaselineForm
           deploymentId={id}
           currency={org.currency}

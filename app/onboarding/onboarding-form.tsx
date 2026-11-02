@@ -12,18 +12,19 @@ export function OnboardingForm() {
   const e = state.errors ?? {};
   return (
     <form action={action} className="space-y-4">
-      <Field label="Organisation name" htmlFor="name" error={e.name}>
+      <Field label="Organisation name" htmlFor="name" info="org_name" error={e.name}>
         <Input id="name" name="name" required />
       </Field>
-      <Field label="Industry" htmlFor="industry" error={e.industry}>
+      <Field label="Industry" htmlFor="industry" info="org_industry" error={e.industry}>
         <Input id="industry" name="industry" placeholder="e.g. Manufacturing" />
       </Field>
-      <Field label="Currency" htmlFor="currency" hint="All amounts are stored in this currency." error={e.currency}>
+      <Field label="Currency" htmlFor="currency" info="org_currency" hint="All amounts are stored in this currency." error={e.currency}>
         <NativeSelect id="currency" name="currency" defaultValue={DEFAULT_CURRENCY} options={currencyOptions()} required />
       </Field>
       <Field
         label="Default loaded hourly rate"
         htmlFor="default_loaded_hourly_rate"
+        info="org_rate"
         hint="Salary plus overheads, per hour. Used when a baseline or time log has no rate."
         error={e.default_loaded_hourly_rate}
       >
